@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
           const fileStart = part.indexOf('\r\n\r\n') + 4;
           const fileContent = part.slice(fileStart, part.lastIndexOf('\r\n'));
 
-          const uploadsDir = path.resolve(__dirname, '../uploads');
+          const uploadsDir = path.resolve(__dirname, '../tmp/uploads');
           if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
           const imgFilename = `img-${Date.now()}-${Math.floor(Math.random() * 10000)}${path.extname(fileName)}`;
@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
       timestamp
     };
 
-    const postsDir = path.resolve(__dirname, '../posts');
+    const postsDir = path.resolve(__dirname, '../tmp/posts');
     if (!fs.existsSync(postsDir)) fs.mkdirSync(postsDir, { recursive: true });
 
     const postPath = path.join(postsDir, uniqueName);
