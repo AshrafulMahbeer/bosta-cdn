@@ -3,7 +3,6 @@ import { put } from '@vercel/blob';
 
 export default async function handler(req, res) {
   try {
-    // Only allow GET (since query params) or you can adapt to POST if preferred.
     if (req.method !== 'GET') {
       res.setHeader('Allow', 'GET');
       return res.status(405).json({ error: 'Method not allowed. Use GET with ?text=...&userid=...' });
@@ -15,35 +14,44 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required query params: text and userid' });
     }
 
+    // Get token from environment
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    console.log('Token present?', !!token);
+    if (!token) {
+      return res.status(500).json({ error: 'Blob token not configured in environment' });
+    }
+
     // Normalize inputs
     const safeUserId = String(userid).replace(/[^a-zA-Z0-9-_]/g, '_');
-    const timestamp = new Date().toISOString(); // ISO timestamp
+    const timestamp = new Date().toISOString();
 
     // Define blob paths
     const basePath = `users/${safeUserId}`;
     const textKey = `${basePath}/${timestamp}-content.txt`;
     const metaKey = `${basePath}/${timestamp}-meta.json`;
 
-    // Upload the raw text as a blob
+    // Upload the raw text as a blob with token
     const { url: textBlobUrl } = await put(textKey, text, {
       access: 'public',
       contentType: 'text/plain; charset=utf-8',
+      token,
     });
 
     // Construct metadata JSON
     const metadata = {
       userid: safeUserId,
-      text, // optionally you could omit raw text here if you want only in the text blob
+      text,
       timestamp,
       blobLocation: textBlobUrl,
     };
 
     const metadataString = JSON.stringify(metadata, null, 2);
 
-    // Upload metadata JSON
+    // Upload metadata JSON with token
     const { url: metaBlobUrl } = await put(metaKey, metadataString, {
       access: 'public',
       contentType: 'application/json; charset=utf-8',
+      token,
     });
 
     // Return consolidated response
